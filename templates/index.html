@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WorldExplorer: buscador y comparador de información de países.">
+    <title>WorldExplorer | Explora países</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container nav">
+            <a class="brand" href="#inicio" aria-label="Ir al inicio">
+                <span class="brand-mark" aria-hidden="true">🌎</span>
+                <span>WorldExplorer</span>
+            </a>
+
+            <nav class="nav-links" aria-label="Navegación principal">
+                <a href="#explorar">Explorar</a>
+                <a href="#comparar">Comparar</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="inicio">
+        <section class="hero" id="explorar">
+            <div class="container hero-grid">
+                <div class="hero-copy">
+                    <p class="eyebrow">INFORMACIÓN GLOBAL EN UN SOLO LUGAR</p>
+                    <h1>Descubre el mundo, <span>país por país.</span></h1>
+                    <p class="hero-text">
+                        Consulta datos clave como capital, población, moneda, idiomas,
+                        región, área y continente de forma rápida y visual.
+                    </p>
+
+                    <form id="search-form" class="search-form" novalidate>
+                        <label class="sr-only" for="country-input">Nombre del país</label>
+                        <input
+                            id="country-input"
+                            name="country"
+                            type="search"
+                            placeholder="Ejemplo: Costa Rica"
+                            autocomplete="off"
+                            required
+                        >
+                        <button id="search-button" type="submit">
+                            <span aria-hidden="true">🔎</span>
+                            Buscar país
+                        </button>
+                    </form>
+
+                    <div id="search-status" class="status" role="status" aria-live="polite"></div>
+
+                    <div class="quick-search" aria-label="Búsquedas rápidas">
+                        <span>Prueba con:</span>
+                        <button type="button" class="quick-chip" data-country="Costa Rica">Costa Rica</button>
+                        <button type="button" class="quick-chip" data-country="México">México</button>
+                        <button type="button" class="quick-chip" data-country="Japón">Japón</button>
+                    </div>
+                </div>
+
+                <aside class="hero-visual" aria-label="Resumen visual">
+                    <div class="globe-card">
+                        <div class="globe">🌍</div>
+                        <div class="floating-stat stat-one">
+                            <span>🗺️</span>
+                            <div>
+                                <strong>Explora</strong>
+                                <small>países y regiones</small>
+                            </div>
+                        </div>
+                        <div class="floating-stat stat-two">
+                            <span>⚖️</span>
+                            <div>
+                                <strong>Compara</strong>
+                                <small>datos clave</small>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="result-section">
+            <div class="container">
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-icon" aria-hidden="true">🧭</div>
+                    <h2>¿Qué país quieres descubrir?</h2>
+                    <p>Escribe un país en el buscador para ver su información principal.</p>
+                </div>
+
+                <article id="country-result" class="country-card hidden" aria-live="polite">
+                    <div class="country-card-header">
+                        <div class="flag-wrap">
+                            <img id="country-flag" src="" alt="">
+                        </div>
+
+                        <div class="country-heading">
+                            <p id="country-region" class="region-pill"></p>
+                            <h2 id="country-name"></h2>
+                            <p id="official-name" class="official-name"></p>
+                        </div>
+                    </div>
+
+                    <div class="country-data-grid">
+                        <div class="data-card">
+                            <span class="data-icon" aria-hidden="true">🏛️</span>
+                            <div>
+                                <span class="data-label">Capital</span>
+                                <strong id="capital">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <span class="data-icon" aria-hidden="true">👥</span>
+                            <div>
+                                <span class="data-label">Población</span>
+                                <strong id="population">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <span class="data-icon" aria-hidden="true">💰</span>
+                            <div>
+                                <span class="data-label">Moneda</span>
+                                <strong id="currency">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <span class="data-icon" aria-hidden="true">🗣️</span>
+                            <div>
+                                <span class="data-label">Idioma(s)</span>
+                                <strong id="language">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <span class="data-icon" aria-hidden="true">📍</span>
+                            <div>
+                                <span class="data-label">Subregión</span>
+                                <strong id="subregion">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <span class="data-icon" aria-hidden="true">📐</span>
+                            <div>
+                                <span class="data-label">Área</span>
+                                <strong id="area">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <span class="data-icon" aria-hidden="true">🌐</span>
+                            <div>
+                                <span class="data-label">Continente</span>
+                                <strong id="continent">—</strong>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="compare-section" id="comparar">
+            <div class="container">
+                <div class="section-heading">
+                    <p class="eyebrow">COMPARADOR</p>
+                    <h2>Compara dos países</h2>
+                    <p>Visualiza sus principales diferencias lado a lado.</p>
+                </div>
+
+                <form id="compare-form" class="compare-form" novalidate>
+                    <div class="compare-input">
+                        <label for="country-one">Primer país</label>
+                        <input id="country-one" type="text" placeholder="Ejemplo: Costa Rica" required>
+                    </div>
+
+                    <div class="vs-badge" aria-hidden="true">VS</div>
+
+                    <div class="compare-input">
+                        <label for="country-two">Segundo país</label>
+                        <input id="country-two" type="text" placeholder="Ejemplo: México" required>
+                    </div>
+
+                    <button id="compare-button" type="submit">Comparar</button>
+                </form>
+
+                <div id="compare-status" class="status centered" role="status" aria-live="polite"></div>
+                <div id="comparison-result" class="comparison-grid"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-content">
+            <div>
+                <strong>🌎 WorldExplorer</strong>
+                <p>Proyecto académico de Programación Web.</p>
+            </div>
+            <p class="footer-note">Datos obtenidos desde una API externa de países.</p>
+        </div>
+    </footer>
+
+    <script src="../static/js/app.js"></script>
+</body>
+</html>
