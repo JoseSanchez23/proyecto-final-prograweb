@@ -4,6 +4,10 @@ from src.models import Country
 DB_PATH = "paises.db"
 
 
+def _connect():
+    return sqlite3.connect(DB_PATH)
+
+
 def crear_tablas():
     """Crea la tabla de países si no existe todavía."""
     conn = sqlite3.connect(DB_PATH)
@@ -30,7 +34,7 @@ def crear_tablas():
 
 def guardar_pais(pais: Country):
     """Inserta o actualiza un país en la base de datos."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO paises
@@ -49,20 +53,37 @@ def guardar_pais(pais: Country):
             bandera_url = excluded.bandera_url,
             fecha_actualizacion = CURRENT_TIMESTAMP
     """, (
-        pais.name, pais.official_name, pais.capital, pais.region,
-        pais.subregion, pais.population, pais.area_km2,
-        pais.currency, pais.language, pais.flag_url,
+        pais.name,
+        pais.official_name,
+        pais.capital,
+        pais.region,
+        pais.subregion,
+        pais.population,
+        pais.area_km2,
+        pais.currency,
+        pais.language,
+        pais.flag_url,
     ))
     conn.commit()
     conn.close()
 
 
-def listar_paises_guardados() -> list[dict]:
-    """Devuelve todos los países guardados como lista de diccionarios."""
-    conn = sqlite3.connect(DB_PATH)
+def obtener_pais_guardado(nombre: str) -> dict | None:
+    conn = _connect()
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM paises")
+    cursor.execute("SELECT * FROM paises WHERE nombre = ?", (nombre,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def listar_paises_guardados() -> list[dict]:
+    """Devuelve todos los países guardados como lista de diccionarios."""
+    conn = _connect()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM paises ORDER BY nombre COLLATE NOCASE ASC")
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
