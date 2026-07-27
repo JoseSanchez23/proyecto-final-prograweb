@@ -1,46 +1,48 @@
-# Arquitectura del proyecto
+# Arquitectura de WorldExplorer
 
 ## Visión general
 
-El proyecto sigue una separación en capas, donde cada módulo tiene una única responsabilidad. Esta separación permite modificar la fuente de datos (la API) o el destino de almacenamiento (la base de datos) sin afectar al resto del código.
+El proyecto sigue una separación en capas, donde cada módulo tiene una única responsabilidad. Esta separación permite modificar la fuente de datos (la API) o el destino de almacenamiento (la base de datos) sin afectar al resto del código. La aplicación está diseñada como un backend en consola, con una clara proyección para evolucionar hacia una aplicación web completa.
+
 
 ```
 ┌─────────────────────────┐
-│  REST Countries API v5  │   fuente externa de datos
+│ REST Countries API v5 │ fuente externa de datos
 └────────────┬─────────────┘
-             │ HTTP GET (Authorization: Bearer)
-             ▼
+│ HTTP GET (Authorization: Bearer)
+▼
 ┌─────────────────────────┐
-│   src/api_client.py      │   capa de conexión
-│   - get_all_countries()  │   - arma la URL y los headers
-│   - get_country_by_name()│   - maneja errores de red y timeouts
-│   - get_countries_by_region() │ - valida respuestas vacías
+│ src/api_client.py │ capa de conexión
+│ - get_all_countries() │ - arma la URL y los headers
+│ - get_country_by_name()│ - maneja errores de red y timeouts
+│ - get_countries_by_region() │ - valida respuestas vacías
 └────────────┬─────────────┘
-             │ lista de diccionarios (JSON crudo)
-             ▼
+│ lista de diccionarios (JSON crudo)
+▼
 ┌─────────────────────────┐
-│   src/models.py           │   capa de modelo
-│   - class Country          │   - define la forma de los datos que
-│   - from_api_response()    │     usa el resto de la aplicación
+│ src/models.py │ capa de modelo
+│ - class Country │ - define la forma de los datos que
+│ - from_api_response() │ usa el resto de la aplicación
 └────────────┬─────────────┘
-             │ objeto Country
-             ▼
+│ objeto Country
+▼
 ┌─────────────────────────┐
-│   src/services.py          │   capa de lógica de negocio
-│   - buscar_pais()           │   - combina api_client + models
-│   - paises_por_region()     │   - punto único de acceso para app/
+│ src/services.py │ capa de lógica de negocio
+│ - buscar_pais() │ - combina api_client + models
+│ - paises_por_region() │ - punto único de acceso para app/
 └────────────┬─────────────┘
-             │
-     ┌───────┴────────┐
-     ▼                ▼
-┌───────────┐  ┌──────────────────┐
-│ app/main.py│  │ src/database.py    │
-│ (presentación)│ (persistencia)   │
-└───────────┘  └──────────────────┘
-                       │
-                       ▼
-                  paises.db (SQLite)
+│
+┌───────┴────────┐
+▼ ▼
+┌───────────┐ ┌──────────────────┐
+│ app/main.py│ │ src/database.py │
+│ (presentación)│ (persistencia) │
+└───────────┘ └──────────────────┘
+│
+▼
+paises.db (SQLite)
 ```
+
 
 ## Responsabilidad de cada módulo
 
@@ -65,6 +67,38 @@ Punto de entrada del programa. Orquesta el flujo completo: busca un país, lo mu
 - **Manejo de errores en `api_client.py`**: toda excepción de red se captura ahí; el resto del código recibe `None` en caso de fallo y decide qué hacer, en lugar de propagar excepciones no controladas.
 - **Credenciales fuera del código**: la API key se lee desde variables de entorno (`.env`, excluido del control de versiones), nunca se escribe directamente en el código fuente.
 - **`ON CONFLICT` en SQLite**: evita registros duplicados (si se consulta el mismo país más de una vez); actualiza los datos existentes en lugar de crear una fila nueva.
+
+## Visión Futura: Integración con Frontend Web
+
+Aunque actualmente la aplicación es un backend de consola, el diseño en capas permite una evolución natural hacia un producto web completo.
+
+### Propuesta de Interfaz Web
+- **Tecnología sugerida:** Flask o FastAPI para el backend web, con HTML/CSS/JavaScript o un framework como React/Vue para el frontend.
+- **Funcionalidades planeadas:**
+  - Buscador de países con autocompletado.
+  - Dashboard con tarjetas de información (bandera, capital, población, moneda, idioma).
+  - Comparador de países lado a lado.
+  - Visualización de datos con gráficos (población, área, densidad).
+
+### Integración con el Backend Actual
+1. El frontend enviará peticiones HTTP (ej. `/api/pais?nombre=Costa Rica`) al nuevo backend web.
+2. El backend web reutilizará los módulos existentes (`src/api_client.py`, `src/services.py`, `src/database.py`) para obtener y procesar los datos.
+3. El backend web devolverá la respuesta en formato JSON al frontend.
+4. El frontend renderizará la información en el navegador.
+
+### Diagrama de Arquitectura Propuesta
+
+```
+[Frontend (Browser)] → (HTTP) → [Backend Web (Flask/FastAPI)]
+↓
+[src/services.py]
+↓
+[src/api_client.py] → [REST Countries API]
+↓
+[src/database.py] → [SQLite]
+↓
+[Frontend recibe JSON] → [Renderizado]
+```
 
 ## Posibles extensiones futuras
 
