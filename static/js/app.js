@@ -13,13 +13,10 @@ const compareStatus = document.getElementById("compare-status");
 const comparisonResult = document.getElementById("comparison-result");
 
 // Endpoint esperado del backend del equipo.
-// Mantener la API key exclusivamente en Python/.env; nunca exponerla en JavaScript.
 const BACKEND_SEARCH_ENDPOINT = "/api/countries/search";
 
 /**
  * Solicita un país al backend del proyecto.
- * El backend debe devolver el Country.to_dict() existente en src/models.py,
- * o un objeto con esa misma estructura.
  */
 async function fetchCountry(countryName) {
     const cleanName = countryName.trim();
@@ -35,7 +32,6 @@ async function fetchCountry(countryName) {
     }
 
     let response;
-
     try {
         response = await fetch(
             `${BACKEND_SEARCH_ENDPOINT}?name=${encodeURIComponent(cleanName)}`,
@@ -47,6 +43,7 @@ async function fetchCountry(countryName) {
         );
     }
 
+    // ✅ CORREGIDO: Si el status NO es 200, lanza error
     if (response.status === 404) {
         throw new Error("No encontramos ese país. Revisa el nombre e inténtalo nuevamente.");
     }
@@ -83,11 +80,7 @@ function normalizeBackendCountry(data) {
         languages: country?.language || country?.languages || "No disponible",
         flagUrl: country?.flag_url || country?.flagUrl || "",
         emojiFlag: country?.emoji_flag || country?.emojiFlag || "",
-        continents: Array.isArray(country?.continents)
-            ? country.continents
-            : country?.continents
-                ? [country.continents]
-                : []
+        continents: Array.isArray(country?.continents) ? country.continents : []
     };
 }
 
@@ -110,7 +103,6 @@ function renderCountry(country) {
     );
 
     const flag = document.getElementById("country-flag");
-
     if (country.flagUrl) {
         flag.src = country.flagUrl;
         flag.alt = `Bandera de ${country.name}`;
@@ -251,7 +243,6 @@ function setText(id, value) {
 function setStatus(element, message, type) {
     element.textContent = message;
     element.classList.remove("error", "success");
-
     if (type) {
         element.classList.add(type);
     }
@@ -264,11 +255,9 @@ function setLoading(button, isLoading, text) {
 
 function formatNumber(value) {
     const number = Number(value);
-
     if (!Number.isFinite(number) || number === 0) {
         return "No disponible";
     }
-
     return new Intl.NumberFormat("es-CR", {
         maximumFractionDigits: 2
     }).format(number);
