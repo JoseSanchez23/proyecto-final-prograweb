@@ -1,12 +1,14 @@
 from src.api_client import get_country_by_name, get_countries_by_region
 from src.models import Country
-
+from src.database import guardar_pais
 
 def buscar_pais(nombre: str) -> Country | None:
     data = get_country_by_name(nombre)
     if not data:
         return None
-    return Country.from_api_response(data[0])
+    pais = Country.from_api_response(data[0])
+    guardar_pais(pais)
+    return pais
 
 
 def buscar_paises_por_region(region: str) -> list[Country]:

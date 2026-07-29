@@ -1,89 +1,45 @@
-import sqlite3
+import os
+from dotenv import load_dotenv
+from supabase import create_client
 from src.models import Country
 
-DB_PATH = "paises.db"
+load_dotenv()
 
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 
-def _connect():
-    return sqlite3.connect(DB_PATH)
-
+# El backend usa la service_role key porque corre en el servidor,
+# nunca en el navegador del usuario, y necesita poder escribir.
+supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 def crear_tablas():
-    """Crea la tabla de países si no existe todavía."""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS paises (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT UNIQUE,
-            nombre_oficial TEXT,
-            capital TEXT,
-            region TEXT,
-            subregion TEXT,
-            poblacion INTEGER,
-            area_km2 REAL,
-            moneda TEXT,
-            idioma TEXT,
-            bandera_url TEXT,
-            fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
+    """La tabla ya se crea manualmente en Supabase (SQL Editor), no aquí."""
+    pass
 
 
 def guardar_pais(pais: Country):
-    """Inserta o actualiza un país en la base de datos."""
-    conn = _connect()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO paises
-            (nombre, nombre_oficial, capital, region, subregion,
-             poblacion, area_km2, moneda, idioma, bandera_url)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(nombre) DO UPDATE SET
-            nombre_oficial = excluded.nombre_oficial,
-            capital = excluded.capital,
-            region = excluded.region,
-            subregion = excluded.subregion,
-            poblacion = excluded.poblacion,
-            area_km2 = excluded.area_km2,
-            moneda = excluded.moneda,
-            idioma = excluded.idioma,
-            bandera_url = excluded.bandera_url,
-            fecha_actualizacion = CURRENT_TIMESTAMP
-    """, (
-        pais.name,
-        pais.official_name,
-        pais.capital,
-        pais.region,
-        pais.subregion,
-        pais.population,
-        pais.area_km2,
-        pais.currency,
-        pais.language,
-        pais.flag_url,
-    ))
-    conn.commit()
-    conn.close()
+    """Inserta o actualiza un país en Supabase."""
+    supabase.table("paises").upsert({
+        "nombre": pais.name,
+        "nombre_oficial": pais.official_name,
+        "capital": pais.capital,
+        "region": pais.region,
+        "subregion": pais.subregion,
+        "poblacion": pais.population,
+        "area_km2": pais.area_km2,
+        "moneda": pais.currency,
+        "idioma": pais.language,
+        "bandera_url": pais.flag_url,
+    }, on_conflict="nombre").execute()
 
 
 def obtener_pais_guardado(nombre: str) -> dict | None:
-    conn = _connect()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM paises WHERE nombre = ?", (nombre,))
-    row = cursor.fetchone()
-    conn.close()
-    return dict(row) if row else None
+    response = supabase.table("paises").select("*").eq("nombre", nombre).execute()
+    data = response.data
+    return data[0] if data else None
 
 
 def listar_paises_guardados() -> list[dict]:
     """Devuelve todos los países guardados como lista de diccionarios."""
-    conn = _connect()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM paises ORDER BY nombre COLLATE NOCASE ASC")
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    response = supabase.table("paises").select("*").order("nombre").execute()
+    return response.data
