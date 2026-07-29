@@ -53,6 +53,9 @@ class Country:
         if isinstance(currencies, dict):
             first_currency = next(iter(currencies.values()), {})
             currency = first_currency.get("name", "N/A") if isinstance(first_currency, dict) else str(first_currency)
+        elif isinstance(currencies, list) and currencies:
+            first_currency = currencies[0]
+            currency = first_currency.get("name", "N/A") if isinstance(first_currency, dict) else str(first_currency)
         else:
             currency = "N/A"
 
