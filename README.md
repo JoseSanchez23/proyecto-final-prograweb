@@ -2,9 +2,20 @@
 
 ## Descripción
 
-Aplicación que consume la [REST Countries API (v5)](https://restcountries.com/docs/countries) para obtener información de países (capital, población, moneda, idioma, bandera, etc.), procesa los datos y los almacena en una base de datos local SQLite.
+Aplicación que consume la [REST Countries API (v5)](https://restcountries.com/docs/countries) para obtener información de países (capital, población, moneda, idioma, bandera, etc.), procesa los datos y los almacena en **Supabase** (PostgreSQL en la nube).
 
 **Producto:** buscador/dashboard de países orientado a viajeros, estudiantes de geografía y personas interesadas en explorar datos geográficos de forma rápida.
+
+## Integrantes del grupo
+
+- [Iván Cespedes]
+- [Mauro Hernandez]
+- [Yulissa Navarro]
+- [Jose Ignacio Sánchez]
+
+## Link de producción
+
+🔗 [Pendiente — se agrega una vez desplegado en Vercel]
 
 ## Arquitectura
 
@@ -15,12 +26,15 @@ api_client.py → conexión a la API, manejo de errores y respuestas vacías
 ↓
 models.py → transforma el JSON crudo en un objeto Country tipado
 ↓
-services.py → combina api_client + models en funciones de alto nivel
+services.py → combina api_client + models en funciones de alto nivel;
+              guarda cada país consultado en la base de datos
 ↓
-database.py → guarda/actualiza los objetos Country en SQLite
+database.py → guarda/actualiza los objetos Country en Supabase (PostgreSQL)
 ↓
-main.py → punto de entrada, orquesta el flujo completo
+server.py → servidor Flask, expone la interfaz web y la API interna
 ```
+
+> Nota: `database.py` migró de SQLite a Supabase. SQLite no es compatible con el entorno serverless de Vercel, ya que su sistema de archivos no persiste entre ejecuciones.
 
 ## Estructura del repositorio
 
@@ -28,10 +42,11 @@ main.py → punto de entrada, orquesta el flujo completo
 proyecto-final-prograweb/
 ├── requirements.txt
 ├── env_example
+├── vercel.json           configuración de despliegue en Vercel
 ├── src/
 │   ├── api_client.py    conexión con la API
 │   ├── models.py        modelo de datos (Country)
-│   ├── database.py      persistencia en SQLite
+│   ├── database.py      persistencia en Supabase
 │   └── services.py      lógica de negocio
 ├── app/
 │   ├── main.py           punto de entrada (backend consola)
@@ -49,20 +64,30 @@ proyecto-final-prograweb/
     └── arquitectura.md
 ```
 
+## Tecnologías utilizadas
+
+- **Backend:** Python 3, Flask
+- **Fuente de datos:** REST Countries API (v5)
+- **Base de datos:** Supabase (PostgreSQL) con Row Level Security
+- **Despliegue:** Vercel
+- **Control de versiones:** Git / GitHub
+
 ## Requisitos
 
 - Python 3.10 o superior
 - Git
 - API key de REST Countries (gratuita, sin tarjeta — ver sección "Configuración")
-- Conexión a internet (para consultar la API)
+- Cuenta de Supabase (gratuita)
+- Conexión a internet (para consultar la API y la base de datos)
 
 ### Dependencias del proyecto
 
-Las dependencias se instalan automáticamente con `pip install -r requirements.txt`:
+Las dependencias se instalan automáticamente con `pip install -r requirements.txt`. Entre las principales:
 
 - `requests` → Para consumir la API de países.
 - `python-dotenv` → Para manejar las variables de entorno.
 - `flask` → Para el servidor web y la API interna.
+- `supabase` → Cliente oficial para conectarse a Supabase.
 - `pytest` → Para ejecutar las pruebas unitarias.
 
 ## Instalación
@@ -75,26 +100,52 @@ source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Configuración de la API key
+## Variables de entorno necesarias
 
-1. Registrarse en https://restcountries.com/sign-up y obtener una API key (free tier: 500 requests/mes, sin tarjeta).
-2. Copiar el archivo de variables de entorno de ejemplo:
+Copiar el archivo de ejemplo y completarlo con tus propios valores (nunca se sube el `.env` real a GitHub):
+
 ```bash
 cp env_example .env
 ```
-3. Abrir el archivo `.env` recién creado y completarlo con tu API key:
+
+Variables requeridas (sin revelar valores reales aquí):
+
 ```
-API_BASE_URL=https://api.restcountries.com/countries/v5
-API_KEY=tu_api_key_aqui
+API_BASE_URL=            # URL base de REST Countries API
+API_KEY=                 # API key de REST Countries
+SUPABASE_URL=             # URL del proyecto de Supabase (sin /rest/v1/ al final)
+SUPABASE_KEY=             # anon public key — solo lectura, usada por operaciones públicas
+SUPABASE_SERVICE_KEY=     # service_role key — solo la usa el backend, para escritura
 ```
 
-El archivo `.env` está excluido del repositorio mediante `.gitignore`. Cada integrante mantiene su propia copia local con la key adentro; nunca se sube a GitHub.
+### Configuración de la API key de REST Countries
 
-> **Para pruebas rápidas:** Puedes usar la demo key oficial de REST Countries que no requiere registro:
-> ```
-> API_KEY=rc_live_demo
-> ```
-> (Tiene limitaciones, pero es útil para probar la interfaz sin necesidad de crear una cuenta)
+1. Registrarse en https://restcountries.com/sign-up y obtener una API key (free tier: 500 requests/mes, sin tarjeta).
+2. Completar `API_KEY` en el `.env`.
+
+> **Para pruebas rápidas:** puedes usar la demo key oficial, que no requiere registro: `API_KEY=rc_live_demo` (con limitaciones).
+
+### Configuración de Supabase
+
+1. Crear un proyecto gratuito en https://supabase.com.
+2. En `Project Settings → API`, copiar el **Project URL** y las llaves **anon public** y **service_role**.
+3. Completar `SUPABASE_URL`, `SUPABASE_KEY` y `SUPABASE_SERVICE_KEY` en el `.env`.
+
+El archivo `.env` está excluido del repositorio mediante `.gitignore`. Cada integrante mantiene su propia copia local; nunca se sube a GitHub.
+
+## Uso de Supabase
+
+**Tabla creada:** `paises`, con las columnas `nombre`, `nombre_oficial`, `capital`, `region`, `subregion`, `poblacion`, `area_km2`, `moneda`, `idioma`, `bandera_url` y `fecha_actualizacion`.
+
+**Qué se almacena:** cada país consultado por un usuario se guarda (o actualiza, si ya existía) automáticamente al momento de la búsqueda, funcionando como historial de consultas.
+
+**Cómo se conecta la aplicación:** `src/database.py` inicializa un cliente de Supabase usando la `service_role key`, ya que las operaciones de guardado las realiza exclusivamente el backend (nunca el navegador del usuario).
+
+**Medidas de seguridad aplicadas:**
+- Row Level Security (RLS) activado en la tabla `paises`.
+- Política de **solo lectura pública** (`SELECT`) para la `anon key`: cualquiera puede consultar el historial, pero nadie puede modificarlo usando esa key.
+- No existe política de escritura para claves públicas. Las inserciones/actualizaciones (`guardar_pais`) las realiza únicamente el backend, autenticado con la `service_role key`.
+- La `service_role key` nunca se expone al frontend ni se sube al repositorio; vive solo en el `.env` local y en las variables de entorno de Vercel.
 
 ## Ejecución
 
@@ -102,76 +153,30 @@ El proyecto tiene dos modos de ejecución: el **backend en consola** (para prueb
 
 ### 1. Backend en consola (modo básico)
 
-Ejecuta el siguiente comando para buscar un país y ver los datos en la terminal:
-
 ```bash
 python -m app.main --search "Costa Rica"
 ```
 
-**Salida esperada:**
-```
-Bienvenido a World Explorer - backend educativo.
-Usa --search, --region o --compare para obtener datos.
-
-Resultado de búsqueda para 'Costa Rica':
-----------------------------------------
-Nombre: Costa Rica
-Nombre oficial: Republic of Costa Rica
-Capital: San José
-Población: 5,160,700
-...
-Este país se guardó en la base de datos local.
-
-Países guardados en la base de datos:
-  - Costa Rica (5,160,700 hab.)
-```
-
 **Nota:** ejecutar siempre con `python -m app.main`, no `python app/main.py`. La flag `-m` agrega la raíz del proyecto a la ruta de búsqueda de módulos; sin ella, la importación `from src...` falla con `ModuleNotFoundError: No module named 'src'`.
-
-La base de datos (`paises.db`) se genera automáticamente en la primera ejecución y no se sube al repositorio.
 
 ### 2. Servidor web (modo completo con interfaz gráfica)
 
-Este modo inicia un servidor Flask que sirve la interfaz web y la API. Es el modo recomendado para usar la aplicación.
-
-#### Paso 1: Instalar dependencias (incluye Flask)
-
-Asegúrate de tener todas las dependencias instaladas:
+Este modo inicia un servidor Flask que sirve la interfaz web y la API. Es el modo recomendado.
 
 ```bash
-pip install -r requirements.txt
-```
-
-> **Nota:** Si ves un error `ModuleNotFoundError: No module named 'flask'`, ejecuta `pip install flask` manualmente.
-
-#### Paso 2: Configurar tu API key
-
-Asegúrate de que el archivo `.env` esté configurado con tu API key (como se explicó en la sección "Configuración de la API key").
-
-#### Paso 3: Ejecutar el servidor web
-
-```bash
+pip install -r requirements.txt   # asegúrate de tener todo instalado
 python -m app.server
 ```
 
-**Verás un mensaje como:**
+Verás un mensaje como:
 ```
 🌍 WorldExplorer - Servidor Web
-📁 Ruta del proyecto: /Users/...
 📡 Servidor corriendo en: http://localhost:5001
-🔍 Prueba: http://localhost:5001/api/countries/search?name=Costa%20Rica
-🔄 Presiona Ctrl+C para detener el servidor
 ```
 
-#### Paso 4: Abrir la aplicación en el navegador
+Ve a `http://localhost:5001`, busca un país (ej. "Costa Rica"), y confirma en el panel de Supabase (`Table Editor → paises`) que la búsqueda quedó registrada.
 
-1. Ve a `http://localhost:5001`
-2. Busca un país (ej. "Costa Rica")
-3. Prueba el comparador con dos países (ej. "Costa Rica" y "México")
-
-#### Paso 5: Probar los endpoints de la API (opcional)
-
-Puedes probar la API directamente en el navegador o con `curl`:
+#### Endpoints disponibles
 
 | Endpoint | Ejemplo |
 | :--- | :--- |
@@ -179,32 +184,23 @@ Puedes probar la API directamente en el navegador o con `curl`:
 | Comparar países | `http://localhost:5001/api/countries/compare?country1=Costa%20Rica&country2=Mexico` |
 | Países guardados | `http://localhost:5001/api/countries/saved` |
 
-**Ejemplo con `curl`:**
-```bash
-curl "http://localhost:5001/api/countries/search?name=Costa%20Rica"
-```
+## Despliegue en producción (Vercel)
 
-#### Paso 6: Detener el servidor
+1. Conectar el repositorio de GitHub a un nuevo proyecto en [Vercel](https://vercel.com).
+2. En `Settings → Environment Variables` del proyecto en Vercel, agregar las mismas variables del `.env` (`API_BASE_URL`, `API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_SERVICE_KEY`).
+3. El archivo `vercel.json` en la raíz del proyecto indica a Vercel cómo ejecutar la aplicación Flask como función serverless.
+4. Verificar tras el despliegue que la app cargue correctamente y que las búsquedas se sigan guardando en Supabase.
 
-Presiona `Ctrl+C` en la terminal donde está corriendo Flask.
+## Separación de ambientes
+
+- **Local:** usa el archivo `.env` propio de cada integrante, nunca compartido ni subido al repositorio.
+- **Producción:** las mismas variables se configuran directamente en el dashboard de Vercel, de forma independiente al código fuente.
 
 ## Pruebas
-
-Para ejecutar las pruebas unitarias y verificar que la conexión a la API funciona correctamente:
 
 ```bash
 python -m pytest tests/
 ```
-
-**Salida esperada:**
-```
-============================= test session starts ==============================
-collected 2 items
-tests/test_api_client.py ..                                              [100%]
-============================== 2 passed in 0.5s ===============================
-```
-
-Si alguna prueba falla, verifica que el archivo `.env` esté correctamente configurado con la API Key.
 
 ## Flujo de trabajo en Git
 
@@ -221,13 +217,14 @@ git push origin feature/nombre-de-la-tarea         # luego, Pull Request hacia m
 | Síntoma | Causa | Solución |
 | :--- | :--- | :--- |
 | `ModuleNotFoundError: No module named 'src'` | Se ejecutó `python app/main.py` en vez de `-m` | Usar `python -m app.main` |
-| `ModuleNotFoundError: No module named 'flask'` | Flask no está instalado | Ejecutar `pip install flask` o `pip install -r requirements.txt` |
-| Import de `requests`/`dotenv` marcado en el editor | VS Code usando un intérprete distinto al del `venv` | `Cmd/Ctrl+Shift+P` → "Python: Select Interpreter" → seleccionar `./venv/bin/python` |
-| `KeyError` al procesar la respuesta de la API | Respuesta de error o formato inesperado | Imprimir la respuesta cruda antes de parsear, para confirmar su estructura |
-| `Address already in use` | El puerto 5001 está ocupado | Cambiar el puerto en `app/server.py` (línea 80) a `port=5002` |
-| La página no tiene estilos | Rutas incorrectas en `index.html` | Verificar que sean `/static/css/styles.css` y `/static/js/app.js` |
+| `ModuleNotFoundError: No module named 'flask'` / `'supabase'` | Dependencia no instalada | Ejecutar `pip install -r requirements.txt` |
+| `supabase_url is required` | `.env` no tiene `SUPABASE_URL`, está mal nombrado, o el archivo no está en la raíz | Verificar `cat .env` y que el archivo esté en la raíz del proyecto |
+| `APIError: Invalid path specified in request URL` (PGRST125) | `SUPABASE_URL` incluye `/rest/v1/` al final | Dejar la URL solo hasta `.supabase.co`, sin ruta adicional |
+| Import de `requests`/`dotenv`/`supabase` marcado en el editor | VS Code usando un intérprete distinto al del `venv` | `Cmd/Ctrl+Shift+P` → "Python: Select Interpreter" → seleccionar `./venv/bin/python` |
+| `Address already in use` | El puerto 5001 está ocupado | Cambiar el puerto en `app/server.py` a `port=5002` |
 | La API devuelve error 404 | La API key es inválida o no está configurada | Verificar el archivo `.env` o usar `API_KEY=rc_live_demo` |
+| Datos guardados no aparecen en Supabase | La tabla no se refresca sola | Refrescar manualmente el `Table Editor` en Supabase |
 
 ## Documentación adicional
 
-Para una explicación detallada de la arquitectura, el flujo de datos, las decisiones de diseño y la visión futura con frontend web, consulta el archivo [docs/arquitectura.md](docs/arquitectura.md).
+Para una explicación detallada de la arquitectura, el flujo de datos y las decisiones de diseño, consulta [docs/arquitectura.md](docs/arquitectura.md).
