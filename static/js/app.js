@@ -13,7 +13,8 @@ const compareStatus = document.getElementById("compare-status");
 const comparisonResult = document.getElementById("comparison-result");
 
 // Endpoint esperado del backend del equipo.
-const BACKEND_SEARCH_ENDPOINT = "/api/countries/search";
+// CORREGIDO: URL absoluta para evitar errores de enrutamiento 404 en Vercel
+const BACKEND_SEARCH_ENDPOINT = "https://proyecto-final-progweb.vercel.app/api/countries/search";
 
 /**
  * Solicita un país al backend del proyecto.
