@@ -8,18 +8,16 @@ load_dotenv()
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 
-_supabase_client: Client | None = None
-
 
 def get_client() -> Client:
-    """Crea el cliente de Supabase de forma perezosa (lazy), dentro de cada invocación
-    de la función serverless, en vez de crearlo una sola vez al importar el módulo.
-    Esto evita el error 'ConnectError: [Errno 16] Device or resource busy' que ocurre
-    cuando AWS Lambda reutiliza un contenedor "congelado" con conexiones TCP stale."""
-    global _supabase_client
-    if _supabase_client is None:
-        _supabase_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    return _supabase_client
+    """Crea un cliente de Supabase NUEVO en cada llamada.
+    Importante: no cachear este cliente en una variable global ni de módulo.
+    AWS Lambda (la infraestructura real detrás de las funciones Python de Vercel)
+    reutiliza el mismo contenedor "congelado" entre invocaciones (warm start),
+    y un cliente httpx/Supabase cacheado puede terminar con conexiones TCP en un
+    estado inconsistente, causando 'ConnectError: [Errno 16] Device or resource busy'.
+    Crear el cliente en cada request es un poco menos eficiente, pero elimina el bug de raíz."""
+    return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 
 def crear_tablas():
