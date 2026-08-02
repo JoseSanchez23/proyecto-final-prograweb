@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from supabase import create_client
+from supabase import create_client, Client
 from src.models import Country
 
 load_dotenv()
@@ -8,9 +8,19 @@ load_dotenv()
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 
-# El backend usa la service_role key porque corre en el servidor,
-# nunca en el navegador del usuario, y necesita poder escribir.
-supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+_supabase_client: Client | None = None
+
+
+def get_client() -> Client:
+    """Crea el cliente de Supabase de forma perezosa (lazy), dentro de cada invocación
+    de la función serverless, en vez de crearlo una sola vez al importar el módulo.
+    Esto evita el error 'ConnectError: [Errno 16] Device or resource busy' que ocurre
+    cuando AWS Lambda reutiliza un contenedor "congelado" con conexiones TCP stale."""
+    global _supabase_client
+    if _supabase_client is None:
+        _supabase_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    return _supabase_client
+
 
 def crear_tablas():
     """La tabla ya se crea manualmente en Supabase (SQL Editor), no aquí."""
@@ -19,7 +29,7 @@ def crear_tablas():
 
 def guardar_pais(pais: Country):
     """Inserta o actualiza un país en Supabase."""
-    supabase.table("paises").upsert({
+    get_client().table("paises").upsert({
         "nombre": pais.name,
         "nombre_oficial": pais.official_name,
         "capital": pais.capital,
@@ -34,12 +44,12 @@ def guardar_pais(pais: Country):
 
 
 def obtener_pais_guardado(nombre: str) -> dict | None:
-    response = supabase.table("paises").select("*").eq("nombre", nombre).execute()
+    response = get_client().table("paises").select("*").eq("nombre", nombre).execute()
     data = response.data
     return data[0] if data else None
 
 
 def listar_paises_guardados() -> list[dict]:
     """Devuelve todos los países guardados como lista de diccionarios."""
-    response = supabase.table("paises").select("*").order("nombre").execute()
+    response = get_client().table("paises").select("*").order("nombre").execute()
     return response.data
