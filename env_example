@@ -1,2 +1,4 @@
 API_BASE_URL=https://api.restcountries.com/countries/v5
 API_KEY=tu_api_key_aqui
+SUPABASE_URL=tu_url_de_supabase
+SUPABASE_SERVICE_KEY=tu_service_role_key
