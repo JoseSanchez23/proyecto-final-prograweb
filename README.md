@@ -93,7 +93,7 @@ Las dependencias se instalan automáticamente con `pip install -r requirements.t
 ## Instalación
 
 ```bash
-git clone https://github.com/TU_USUARIO/proyecto-final-prograweb.git
+git clone https://github.com/JoseSanchez23/proyecto-final-prograweb.git
 cd proyecto-final-prograweb
 python3 -m venv venv
 source venv/bin/activate          # Windows: venv\Scripts\activate
