@@ -88,7 +88,6 @@ Las dependencias se instalan automáticamente con `pip install -r requirements.t
 - `python-dotenv` → Para manejar las variables de entorno.
 - `flask` → Para el servidor web y la API interna.
 - `supabase` → Cliente oficial para conectarse a Supabase.
-- `pytest` → Para ejecutar las pruebas unitarias.
 
 ## Instalación
 
@@ -199,7 +198,7 @@ Ve a `http://localhost:5001`, busca un país (ej. "Costa Rica"), y confirma en e
 ## Pruebas
 
 ```bash
-python -m pytest tests/
+python -m unittest discover tests
 ```
 
 ## Flujo de trabajo en Git
