@@ -15,7 +15,7 @@ Aplicación que consume la [REST Countries API (v5)](https://restcountries.com/d
 
 ## Link de producción
 
-🔗 [Pendiente — se agrega una vez desplegado en Vercel]
+🔗 [Abrir WorldExplorer en Vercel](https://proyecto-final-prograweb.vercel.app)
 
 ## Arquitectura
 
