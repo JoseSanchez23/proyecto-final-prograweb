@@ -110,10 +110,9 @@ cp env_example .env
 Variables requeridas (sin revelar valores reales aquí):
 
 ```
-API_BASE_URL=            # URL base de REST Countries API
-API_KEY=                 # API key de REST Countries
+API_BASE_URL=             # URL base de REST Countries API
+API_KEY=                  # API key de REST Countries
 SUPABASE_URL=             # URL del proyecto de Supabase (sin /rest/v1/ al final)
-SUPABASE_KEY=             # anon public key — solo lectura, usada por operaciones públicas
 SUPABASE_SERVICE_KEY=     # service_role key — solo la usa el backend, para escritura
 ```
 
@@ -127,8 +126,8 @@ SUPABASE_SERVICE_KEY=     # service_role key — solo la usa el backend, para es
 ### Configuración de Supabase
 
 1. Crear un proyecto gratuito en https://supabase.com.
-2. En `Project Settings → API`, copiar el **Project URL** y las llaves **anon public** y **service_role**.
-3. Completar `SUPABASE_URL`, `SUPABASE_KEY` y `SUPABASE_SERVICE_KEY` en el `.env`.
+2. En `Project Settings → API`, copiar el **Project URL** y la llave **service_role**.
+3. Completar `SUPABASE_URL` y `SUPABASE_SERVICE_KEY` en el `.env`.
 
 El archivo `.env` está excluido del repositorio mediante `.gitignore`. Cada integrante mantiene su propia copia local; nunca se sube a GitHub.
 
@@ -186,7 +185,7 @@ Ve a `http://localhost:5001`, busca un país (ej. "Costa Rica"), y confirma en e
 ## Despliegue en producción (Vercel)
 
 1. Conectar el repositorio de GitHub a un nuevo proyecto en [Vercel](https://vercel.com).
-2. En `Settings → Environment Variables` del proyecto en Vercel, agregar las mismas variables del `.env` (`API_BASE_URL`, `API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_SERVICE_KEY`).
+2. En `Settings → Environment Variables` del proyecto en Vercel, agregar las mismas variables del `.env` (`API_BASE_URL`, `API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`).
 3. El archivo `vercel.json` en la raíz del proyecto indica a Vercel cómo ejecutar la aplicación Flask como función serverless.
 4. Verificar tras el despliegue que la app cargue correctamente y que las búsquedas se sigan guardando en Supabase.
 
